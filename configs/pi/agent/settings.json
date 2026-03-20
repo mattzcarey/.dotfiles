@@ -1,0 +1,10 @@
+{
+  "lastChangelogVersion": "0.61.0",
+  "defaultProvider": "opencode.cloudflare.dev",
+  "defaultModel": "claude-opus-4-6",
+  "defaultThinkingLevel": "medium",
+  "hideThinkingBlock": false,
+  "packages": [
+    "https://github.com/davebcn87/pi-autoresearch"
+  ]
+}

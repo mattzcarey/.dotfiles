@@ -1,0 +1,36 @@
+// Zed settings
+{
+  "agent": {},
+  "terminal": {
+    "font_family": ".ZedMono"
+  },
+  "telemetry": {
+    "diagnostics": true,
+    "metrics": false
+  },
+  "base_keymap": "VSCode",
+  "minimap": {
+    "show": "never"
+  },
+  "autosave": {
+    "after_delay": {
+      "milliseconds": 1000
+    }
+  },
+  "linked_edits": true,
+  "show_edit_predictions": true,
+  "tab_size": 2,
+  "file_types": {
+    "jsonc": ["wrangler.json"],
+    "dotenv": [".env*"],
+    "tailwindcss": ["*.css"]
+  },
+  "icon_theme": "Zed (Default)",
+  "ui_font_size": 15,
+  "buffer_font_size": 13.0,
+  "theme": {
+    "mode": "dark",
+    "light": "Gruvbox Light",
+    "dark": "Ayu Dark"
+  }
+}

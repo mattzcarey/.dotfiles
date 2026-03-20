@@ -1,0 +1,6 @@
+result
+.direnv
+.wrangler
+
+# Secrets - keep these local
+configs/opencode/opencode.local.json

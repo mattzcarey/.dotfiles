@@ -1,0 +1,39 @@
+{
+  "includeCoAuthoredBy": false,
+  "permissions": {
+    "allow": [],
+    "deny": []
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/matt/.claude/hooks/no-dynamic-imports.sh",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "/Users/matt/.claude/hooks/check-duplicate-functions.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  },
+  "enabledPlugins": {
+    "agent-sdk-dev@claude-code-plugins": false,
+    "code-review@claude-code-plugins": false,
+    "code-simplifier@claude-plugins-official": true,
+    "explanatory-output-style@claude-code-plugins": false,
+    "frontend-design@claude-code-plugins": false,
+    "frontend-design@claude-plugins-official": true,
+    "ralph-wiggum@claude-code-plugins": false,
+    "security-guidance@claude-code-plugins": false
+  },
+  "alwaysThinkingEnabled": true,
+  "voiceEnabled": true,
+  "skipDangerousModePermissionPrompt": true
+}
