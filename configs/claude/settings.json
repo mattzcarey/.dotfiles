@@ -11,12 +11,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/Users/matt/.claude/hooks/no-dynamic-imports.sh",
-            "timeout": 5
-          },
-          {
-            "type": "command",
-            "command": "/Users/matt/.claude/hooks/check-duplicate-functions.sh",
+            "command": "/Users/matt/.claude/hooks/code-quality.sh",
             "timeout": 10
           }
         ]

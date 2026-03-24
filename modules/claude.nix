@@ -2,12 +2,8 @@
 
 {
   home.file.".claude/settings.json".source = ../configs/claude/settings.json;
-  home.file.".claude/hooks/check-duplicate-functions.sh" = {
-    source = ../configs/claude/hooks/check-duplicate-functions.sh;
-    executable = true;
-  };
-  home.file.".claude/hooks/no-dynamic-imports.sh" = {
-    source = ../configs/claude/hooks/no-dynamic-imports.sh;
+  home.file.".claude/hooks/code-quality.sh" = {
+    source = ../configs/claude/hooks/code-quality.sh;
     executable = true;
   };
   home.file.".claude/commands/set-zagi-override.md".source = ../configs/claude/commands/set-zagi-override.md;
