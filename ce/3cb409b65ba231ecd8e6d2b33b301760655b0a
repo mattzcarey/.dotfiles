@@ -1,0 +1,19 @@
+.gitignore
+  s_c02c8b25220d72::t_eb0e8c9dc84c1d 7-9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "ce3cb409b65ba231ecd8e6d2b33b301760655b0a",
+  "prompts": {},
+  "sessions": {
+    "s_c02c8b25220d72": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "09473fec-8bd6-4fa7-ad9f-516f4984a5eb",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Matt Carey <mcarey@cloudflare.com>"
+    }
+  }
+}
