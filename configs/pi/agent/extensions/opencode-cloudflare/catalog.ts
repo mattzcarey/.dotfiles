@@ -2,8 +2,8 @@ import type { Api, Model } from "@earendil-works/pi-ai";
 import { getBuiltinModels } from "@earendil-works/pi-ai/providers/all";
 import type { ProviderModelConfig } from "@earendil-works/pi-coding-agent";
 import { resolveGatewayToken } from "./auth.ts";
-import { DEFAULT_ROUTE_URLS, type Backend } from "./constants.ts";
-import { getDefaultGatewayConfig, getGatewayConfig, stripRoutePrefix, type GatewayModelConfig } from "./wellknown.ts";
+import type { Backend } from "./constants.ts";
+import { getDefaultGatewayConfig, getGatewayConfig, type GatewayModelConfig } from "./wellknown.ts";
 
 export interface RouteDescriptor {
 	backend: Backend;
@@ -19,32 +19,6 @@ export interface CatalogData {
 	routes: Map<string, RouteDescriptor>;
 	counts: Record<Backend, number>;
 }
-
-// Fallback for when the gateway's remote config is unreachable. Entries mirror
-// the gateway's shape: unprefixed key, routable "workers-ai/..." id.
-const DEFAULT_WORKERS_MODELS: Record<string, GatewayModelConfig> = {
-	"@cf/deepseek-ai/deepseek-v4-flash": {
-		id: "workers-ai/@cf/deepseek-ai/deepseek-v4-flash",
-		name: "DeepSeek V4 Flash",
-		reasoning: true,
-		modalities: { input: ["text"], output: ["text"] },
-		limit: { context: 393216, output: 32000 },
-	},
-	"@cf/deepseek-ai/deepseek-v4-pro": {
-		id: "workers-ai/@cf/deepseek-ai/deepseek-v4-pro",
-		name: "DeepSeek V4 Pro",
-		reasoning: true,
-		modalities: { input: ["text"], output: ["text"] },
-		limit: { context: 1048560, output: 32000 },
-	},
-	"@cf/zai-org/glm-5.2": {
-		id: "workers-ai/@cf/zai-org/glm-5.2",
-		name: "GLM 5.2",
-		reasoning: true,
-		modalities: { input: ["text"], output: ["text"] },
-		limit: { context: 262144, output: 32000 },
-	},
-};
 
 let activeCatalog: CatalogData = buildCatalogFromGateway(getDefaultGatewayConfig());
 
@@ -80,8 +54,8 @@ function toProviderModelConfig(model: Model<Api>): ProviderModelConfig {
 	};
 }
 
-function applyGatewayModelLimit(model: Model<Api>, gatewayModels: Record<string, GatewayModelConfig>, backend: Backend): Model<Api> {
-	const gatewayConfig = gatewayModels[model.id] || gatewayModels[`${backend}/${model.id}`] || gatewayModels[`anthropic/${model.id}`];
+function applyGatewayModelLimit(model: Model<Api>, gatewayModels: Record<string, GatewayModelConfig>): Model<Api> {
+	const gatewayConfig = gatewayModels[model.id];
 	if (!gatewayConfig?.limit) return model;
 	return {
 		...model,
@@ -94,26 +68,26 @@ function buildBuiltInModels(backend: Exclude<Backend, "workers-ai">, gatewayMode
 	const builtIns = getBuiltinModels(backend) as Model<Api>[];
 
 	if ((backend === "openai" || backend === "xai") && Object.keys(gatewayModels).length > 0) {
-		const allowlist = new Set(Object.keys(gatewayModels).map((id) => stripRoutePrefix(id, backend)));
-		return builtIns.filter((model) => allowlist.has(model.id)).map((model) => applyGatewayModelLimit(model, gatewayModels, backend));
+		const allowlist = new Set(Object.keys(gatewayModels));
+		return builtIns.filter((model) => allowlist.has(model.id)).map((model) => applyGatewayModelLimit(model, gatewayModels));
 	}
 
-	return builtIns.map((model) => applyGatewayModelLimit(model, gatewayModels, backend));
+	return builtIns.map((model) => applyGatewayModelLimit(model, gatewayModels));
 }
 
 function buildWorkersModels(gatewayModels: Record<string, GatewayModelConfig>, baseUrl: string, headers: Record<string, string>) {
-	const source = Object.keys(gatewayModels).length > 0 ? gatewayModels : DEFAULT_WORKERS_MODELS;
 	const models: ProviderModelConfig[] = [];
 	const routes = new Map<string, RouteDescriptor>();
 
-	for (const [key, config] of Object.entries(source)) {
+	// Workers AI models come solely from the gateway's remote config; with no
+	// token or an unreachable gateway the section is simply empty.
+	for (const [key, config] of Object.entries(gatewayModels)) {
 		// Keys are unprefixed ("@cf/...") with the routable id in config.id
 		// ("workers-ai/@cf/..."); the /compat endpoint only accepts the prefixed form.
 		const requestModelId = config.id || key;
-		const shortId = stripRoutePrefix(key, "workers-ai");
 		models.push({
-			id: shortId,
-			name: `${requestModelId} (${config.name || shortId})`,
+			id: key,
+			name: `${requestModelId} (${config.name || key})`,
 			reasoning: config.reasoning !== false,
 			input: config.modalities?.input || (config.attachment ? ["text", "image"] : ["text"]),
 			cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
@@ -126,7 +100,7 @@ function buildWorkersModels(gatewayModels: Record<string, GatewayModelConfig>, b
 				maxTokensField: "max_tokens",
 			},
 		});
-		routes.set(shortId, {
+		routes.set(key, {
 			backend: "workers-ai",
 			api: "openai-completions",
 			baseUrl,
@@ -156,8 +130,9 @@ function buildCatalogFromGateway(gateway: Awaited<ReturnType<typeof getGatewayCo
 
 	for (const backend of gateway.enabledBackends) {
 		const route = gateway.routes[backend];
+		if (!route) continue;
 		if (backend === "workers-ai") {
-			const workers = buildWorkersModels(route.models, route.baseUrl || DEFAULT_ROUTE_URLS[backend], route.headers);
+			const workers = buildWorkersModels(route.models, route.baseUrl, route.headers);
 			models.push(...workers.models);
 			for (const [modelId, descriptor] of workers.routes.entries()) {
 				routes.set(modelId, descriptor);

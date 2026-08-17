@@ -1,98 +1,15 @@
-import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import os from "node:os";
-import path from "node:path";
 import { spawn } from "node:child_process";
-import { getAgentDir, readStoredCredential } from "@earendil-works/pi-coding-agent";
+import { readStoredCredential } from "@earendil-works/pi-coding-agent";
 import type { OAuthCredential, OAuthCredentials, OAuthLoginCallbacks } from "@earendil-works/pi-ai";
-import {
-	DEFAULT_TOKEN_EXPIRY_MS,
-	GATEWAY_ORIGIN,
-	OPENCODE_AUTH_FILE_ENV,
-	PROVIDER_ID,
-	TOKEN_ENV_OVERRIDE,
-	WELL_KNOWN_URL,
-} from "./constants.ts";
+import { DEFAULT_TOKEN_EXPIRY_MS, GATEWAY_ORIGIN, PROVIDER_ID, WELL_KNOWN_URL } from "./constants.ts";
 import {
 	getGatewayConfig,
 	getGatewayTokenExpiry,
 	isAllowedGatewayOrigin,
-	normalizeGatewayOrigin,
 	resolvePreferredToken,
 } from "./wellknown.ts";
 
-interface OpenCodeAuthRecord {
-	type?: string;
-	key?: string;
-	token?: string;
-}
-
-export interface ImportedGatewayToken {
-	token: string;
-	authPath: string;
-	storageKey: string;
-	keyName?: string;
-	expiresAt?: number;
-}
-
-export function listOpenCodeAuthCandidates(): string[] {
-	const candidates = new Set<string>();
-	const explicit = process.env[OPENCODE_AUTH_FILE_ENV]?.trim();
-	if (explicit) candidates.add(path.resolve(explicit));
-
-	const xdgDataHome = process.env.XDG_DATA_HOME?.trim();
-	if (xdgDataHome) {
-		candidates.add(path.join(xdgDataHome, "opencode", "auth.json"));
-	}
-	candidates.add(path.join(os.homedir(), ".local", "share", "opencode", "auth.json"));
-	return Array.from(candidates);
-}
-
-export function findOpenCodeAuthPath(): string | undefined {
-	return listOpenCodeAuthCandidates().find((candidate) => existsSync(candidate));
-}
-
-function normalizeAuthLookupKeys(origin: string): string[] {
-	const normalizedOrigin = normalizeGatewayOrigin(origin);
-	return [normalizedOrigin, `${normalizedOrigin}/`, WELL_KNOWN_URL];
-}
-
-function readOpenCodeAuthMap(authPath: string): Record<string, OpenCodeAuthRecord> {
-	const raw = JSON.parse(readFileSync(authPath, "utf8")) as unknown;
-	if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
-		throw new Error(`Invalid OpenCode auth file: ${authPath}`);
-	}
-	return raw as Record<string, OpenCodeAuthRecord>;
-}
-
-export function readImportedGatewayToken(origin: string = GATEWAY_ORIGIN): ImportedGatewayToken | undefined {
-	if (!isAllowedGatewayOrigin(origin)) {
-		throw new Error(`Refusing to read auth for untrusted gateway origin: ${origin}`);
-	}
-
-	const authPath = findOpenCodeAuthPath();
-	if (!authPath) return undefined;
-
-	const authMap = readOpenCodeAuthMap(authPath);
-	for (const key of normalizeAuthLookupKeys(origin)) {
-		const record = authMap[key];
-		if (!record || typeof record !== "object") continue;
-		if (typeof record.token !== "string" || !record.token.trim()) continue;
-		return {
-			token: record.token.trim(),
-			authPath,
-			storageKey: key,
-			keyName: typeof record.key === "string" ? record.key : undefined,
-			expiresAt: getGatewayTokenExpiry(record.token.trim()),
-		};
-	}
-
-	return undefined;
-}
-
-export function createGatewayCredentials(
-	token: string,
-	extra?: Record<string, unknown>,
-): OAuthCredentials {
+export function createGatewayCredentials(token: string, extra?: Record<string, unknown>): OAuthCredentials {
 	const expiresAt = getGatewayTokenExpiry(token) ?? Date.now() + DEFAULT_TOKEN_EXPIRY_MS;
 	return {
 		refresh: "",
@@ -107,8 +24,8 @@ export function resolveGatewayToken(apiKey?: string): string | undefined {
 	if (preferred) return preferred;
 	const stored = getPiStoredGatewayCredential();
 	if (stored?.access && stored.expires > Date.now()) return stored.access;
-	const imported = readImportedGatewayToken();
-	if (imported?.token) return imported.token;
+	// Last resort: an expired stored token, so the gateway's 401 (rather than a
+	// silent empty catalog) tells the user to /login again.
 	return stored?.access;
 }
 
@@ -117,50 +34,7 @@ export function getPiStoredGatewayCredential(): OAuthCredential | undefined {
 	return credential?.type === "oauth" ? credential : undefined;
 }
 
-function writePiStoredGatewayCredential(credential: OAuthCredential): void {
-	const agentDir = getAgentDir();
-	const authPath = path.join(agentDir, "auth.json");
-	let auth: Record<string, unknown> = {};
-
-	if (existsSync(authPath)) {
-		const parsed = JSON.parse(readFileSync(authPath, "utf8")) as unknown;
-		if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-			throw new Error(`Invalid Pi auth file: ${authPath}`);
-		}
-		auth = parsed as Record<string, unknown>;
-	}
-
-	mkdirSync(agentDir, { recursive: true, mode: 0o700 });
-	auth[PROVIDER_ID] = credential;
-	writeFileSync(authPath, JSON.stringify(auth, null, 2), { encoding: "utf8", mode: 0o600 });
-	chmodSync(authPath, 0o600);
-}
-
-export async function syncImportedAuthToPi(): Promise<ImportedGatewayToken> {
-	const imported = readImportedGatewayToken();
-	if (!imported) {
-		throw new Error(
-			`No OpenCode auth found for ${GATEWAY_ORIGIN}. Run \`opencode auth login ${GATEWAY_ORIGIN}\` first or use /login ${PROVIDER_ID}.`,
-		);
-	}
-	writePiStoredGatewayCredential({
-		type: "oauth",
-		...createGatewayCredentials(imported.token, { source: "opencode-auth" }),
-	});
-	return imported;
-}
-
 export async function loginOpencodeCloudflare(callbacks: OAuthLoginCallbacks): Promise<OAuthCredentials> {
-	const imported = readImportedGatewayToken();
-	if (imported?.token && (!imported.expiresAt || imported.expiresAt > Date.now())) {
-		callbacks.onProgress?.("Reusing the existing OpenCode Cloudflare token from auth.json");
-		return createGatewayCredentials(imported.token, {
-			source: "opencode-auth",
-			importedFrom: imported.authPath,
-			storageKey: imported.storageKey,
-		});
-	}
-
 	const gateway = await getGatewayConfig({ forceReload: true, fallbackToDefault: false });
 	if (!isAllowedGatewayOrigin(gateway.origin)) {
 		throw new Error(`Refusing login for untrusted gateway origin: ${gateway.origin}`);
@@ -177,19 +51,8 @@ export async function loginOpencodeCloudflare(callbacks: OAuthLoginCallbacks): P
 	return createGatewayCredentials(token, { source: "pi-login" });
 }
 
-export async function refreshOpencodeCloudflare(credentials: OAuthCredentials): Promise<OAuthCredentials> {
-	const imported = readImportedGatewayToken();
-	if (imported?.token && imported.token !== credentials.access) {
-		return createGatewayCredentials(imported.token, {
-			source: "opencode-auth",
-			importedFrom: imported.authPath,
-			storageKey: imported.storageKey,
-		});
-	}
-
-	throw new Error(
-		`The OpenCode Cloudflare token has expired. Run /login ${PROVIDER_ID} or \`opencode auth login ${GATEWAY_ORIGIN}\`, then /reload or /opencode-cf-sync-auth.`,
-	);
+export async function refreshOpencodeCloudflare(_credentials: OAuthCredentials): Promise<OAuthCredentials> {
+	throw new Error(`The OpenCode Cloudflare token has expired. Run /login ${PROVIDER_ID}.`);
 }
 
 export async function runGatewayAuthCommand(
@@ -250,10 +113,6 @@ export async function runGatewayAuthCommand(
 			throw new Error(stderr || `Gateway auth command exited with status ${exitCode}`);
 		}
 		if (!stdout) {
-			const imported = readImportedGatewayToken();
-			if (imported?.token) {
-				return imported.token;
-			}
 			throw new Error("Gateway auth command did not emit a token on stdout.");
 		}
 		return stdout;
@@ -261,16 +120,4 @@ export async function runGatewayAuthCommand(
 		clearTimeout(timeout);
 		signal?.removeEventListener("abort", abort);
 	}
-}
-
-export function describeTokenState(token: string | undefined): string {
-	if (!token) return "missing";
-	const expiresAt = getGatewayTokenExpiry(token);
-	if (!expiresAt) return "present (expiry unknown)";
-	if (expiresAt <= Date.now()) return "expired";
-	return `present (expires ${new Date(expiresAt).toISOString()})`;
-}
-
-export function hasEnvOverride(): boolean {
-	return Boolean(process.env[TOKEN_ENV_OVERRIDE]?.trim());
 }

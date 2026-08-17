@@ -8,39 +8,14 @@ export const GATEWAY_ORIGIN = "https://opencode.cloudflare.dev";
 export const WELL_KNOWN_PATH = "/.well-known/opencode";
 export const WELL_KNOWN_URL = `${GATEWAY_ORIGIN}${WELL_KNOWN_PATH}`;
 
-export const OPENCODE_AUTH_FILE_ENV = "OPENCODE_CLOUDFLARE_AUTH_FILE";
 export const TOKEN_ENV_OVERRIDE = "OPENCODE_CLOUDFLARE_TOKEN";
 export const DEFAULT_TOKEN_EXPIRY_MS = 12 * 60 * 60 * 1000;
 export const EXPIRY_SAFETY_BUFFER_MS = 5 * 60 * 1000;
 export const WELL_KNOWN_CACHE_TTL_MS = 60 * 1000;
 
-export const GATEWAY_API_ORIGIN = "https://gateway.opencode.cloudflare.dev";
-
-export const DEFAULT_ROUTE_URLS: Record<Backend, string> = {
-	anthropic: `${GATEWAY_API_ORIGIN}/anthropic`,
-	openai: `${GATEWAY_API_ORIGIN}/openai`,
-	xai: `${GATEWAY_API_ORIGIN}/grok`,
-	"workers-ai": `${GATEWAY_API_ORIGIN}/compat`,
-};
-
-export const DEFAULT_ROUTE_HEADERS: Record<Backend, Record<string, string>> = {
-	anthropic: {
-		"cf-access-token": "{env:TOKEN}",
-		"X-Requested-With": "xmlhttprequest",
-		"anthropic-beta": "context-1m-2025-08-07",
-	},
-	openai: {
-		"cf-access-token": "{env:TOKEN}",
-		"X-Requested-With": "xmlhttprequest",
-	},
-	xai: {
-		"cf-access-token": "{env:TOKEN}",
-		"X-Requested-With": "xmlhttprequest",
-	},
-	"workers-ai": {
-		"cf-access-token": "{env:TOKEN}",
-		"X-Requested-With": "xmlhttprequest",
-	},
-};
-
 export const ENABLED_BACKENDS: Backend[] = ["anthropic", "openai", "xai", "workers-ai"];
+
+// The gateway's config doesn't set these; without them the anthropic route
+// loses 1M context, and a config-supplied anthropic-beta header would clobber
+// the beta features pi-ai's client sets itself.
+export const ANTHROPIC_BETAS = ["context-1m-2025-08-07", "fine-grained-tool-streaming-2025-05-14"];
