@@ -1,14 +1,40 @@
 // Zed settings
+//
+// For information on how to configure Zed, see the Zed
+// documentation: https://zed.dev/docs/configuring-zed
+//
+// To see all of Zed's default settings without changing your
+// custom settings, run `zed: open default settings` from the
+// command palette (cmd-shift-p / ctrl-shift-p)
 {
-  "agent": {},
+  "project_panel": {
+    "dock": "right"
+  },
+  "outline_panel": {
+    "dock": "right"
+  },
+  "collaboration_panel": {
+    "dock": "right",
+    "button": false
+  },
+  "git_panel": {
+    "dock": "right"
+  },
+  "agent": {
+    "dock": "left"
+  },
+  "agent_servers": {
+    
+  },
   "terminal": {
     "font_family": ".ZedMono"
   },
   "telemetry": {
-    "diagnostics": true,
+    "diagnostics": false,
     "metrics": false
   },
   "base_keymap": "VSCode",
+  "cli_default_open_behavior": "existing_window",
   "minimap": {
     "show": "never"
   },
@@ -18,19 +44,36 @@
     }
   },
   "linked_edits": true,
+  "languages": {
+    "CSS": { "language_servers": ["!tailwindcss-language-server", "..."] },
+    "HTML": { "language_servers": ["!tailwindcss-language-server", "..."] },
+    "JavaScript": { "language_servers": ["!eslint", "!tailwindcss-language-server", "..."] },
+    "TypeScript": { "language_servers": ["!eslint", "!tailwindcss-language-server", "..."] },
+    "TSX": { "language_servers": ["!eslint", "!tailwindcss-language-server", "..."] },
+    "JSX": { "language_servers": ["!eslint", "!tailwindcss-language-server", "..."] },
+    "tailwindcss": { "language_servers": ["!tailwindcss-language-server", "..."] }
+  },
   "show_edit_predictions": true,
+  "edit_predictions": {
+    "provider": "zed",
+    "allow_data_collection": "no"
+  },
   "tab_size": 2,
   "file_types": {
     "jsonc": ["wrangler.json"],
     "dotenv": [".env*"],
     "tailwindcss": ["*.css"]
   },
-  "icon_theme": "Zed (Default)",
+  "icon_theme": {
+    "mode": "dark",
+    "light": "Zed (Default)",
+    "dark": "Zed (Default)"
+  },
   "ui_font_size": 15,
   "buffer_font_size": 13.0,
   "theme": {
     "mode": "dark",
-    "light": "Gruvbox Light",
-    "dark": "Ayu Dark"
+    "light": "Ayu Light",
+    "dark": "Kanso Ink (No italics)"
   }
 }
