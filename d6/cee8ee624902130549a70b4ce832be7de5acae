@@ -1,0 +1,21 @@
+configs/pi/agent/extensions/opencode-cloudflare/auth.ts
+  s_c02c8b25220d72::t_6995bc53104a4e 1,5-6,108-109,112,116,120-138,146-149
+configs/pi/agent/extensions/opencode-cloudflare/print-token.mjs
+  s_c02c8b25220d72::t_0a827ae94233b1 8,12-43,51-52,54-57,63-67,69-70
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "d6cee8ee624902130549a70b4ce832be7de5acae",
+  "prompts": {},
+  "sessions": {
+    "s_c02c8b25220d72": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "09473fec-8bd6-4fa7-ad9f-516f4984a5eb",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Matt Carey <mcarey@cloudflare.com>"
+    }
+  }
+}
