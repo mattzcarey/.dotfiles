@@ -1,0 +1,19 @@
+configs/zed/settings.json
+  s_c02c8b25220d72::t_0cdbd676ab318c 2-8,10-28,33,37,47-55,57-60,67-71,76-77
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "044ff9359178f9a5cf5851f35f8c4f62aba7fc90",
+  "prompts": {},
+  "sessions": {
+    "s_c02c8b25220d72": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "09473fec-8bd6-4fa7-ad9f-516f4984a5eb",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Matt Carey <mcarey@cloudflare.com>"
+    }
+  }
+}
