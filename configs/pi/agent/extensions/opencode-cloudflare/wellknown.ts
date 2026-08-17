@@ -21,6 +21,7 @@ export interface GatewayModelModalities {
 }
 
 export interface GatewayModelConfig {
+	id?: string;
 	name?: string;
 	attachment?: boolean;
 	reasoning?: boolean;
@@ -38,23 +39,31 @@ export interface GatewayRouteConfig {
 	models: Record<string, GatewayModelConfig>;
 }
 
+export interface GatewayProviderConfig {
+	name?: string;
+	options?: {
+		baseURL?: string;
+		baseUrl?: string;
+		headers?: Record<string, unknown>;
+	};
+	models?: Record<string, GatewayModelConfig>;
+}
+
+export interface GatewayRemoteConfig {
+	enabled_providers?: string[];
+	provider?: Record<string, GatewayProviderConfig>;
+}
+
 export interface GatewayWellKnownResponse {
 	auth?: {
 		command?: string | string[];
 		env?: string;
 	};
-	config?: {
-		enabled_providers?: string[];
-		provider?: Partial<Record<Backend, {
-			name?: string;
-			options?: {
-				baseURL?: string;
-				baseUrl?: string;
-				headers?: Record<string, unknown>;
-			};
-			models?: Record<string, GatewayModelConfig>;
-		}>>;
+	remote_config?: {
+		url?: string;
+		headers?: Record<string, unknown>;
 	};
+	config?: GatewayRemoteConfig;
 }
 
 export interface ResolvedGatewayConfig {
@@ -84,9 +93,16 @@ export function normalizeGatewayOrigin(input: string): string {
 	return url.origin;
 }
 
+function mapProviderId(providerId: string): Backend | undefined {
+	if (providerId === "cloudflare-workers-ai") return "workers-ai";
+	return ENABLED_BACKENDS.find((backend) => backend === providerId);
+}
+
 function normalizeBackendList(enabledProviders: string[] | undefined): Backend[] {
 	if (!enabledProviders?.length) return [...ENABLED_BACKENDS];
-	const enabled = new Set(enabledProviders);
+	const enabled = new Set(
+		enabledProviders.map(mapProviderId).filter((backend): backend is Backend => Boolean(backend)),
+	);
 	return ENABLED_BACKENDS.filter((backend) => enabled.has(backend));
 }
 
@@ -113,7 +129,12 @@ function normalizeHeaders(headers: Record<string, unknown> | undefined, backend:
 }
 
 function getRouteProviderConfig(raw: GatewayWellKnownResponse["config"], backend: Backend) {
-	return raw?.provider?.[backend];
+	const providers = raw?.provider;
+	if (!providers) return undefined;
+	if (backend === "workers-ai") {
+		return providers["workers-ai"] || providers["cloudflare-workers-ai"];
+	}
+	return providers[backend];
 }
 
 function resolveRouteConfig(raw: GatewayWellKnownResponse | undefined, backend: Backend): GatewayRouteConfig {
@@ -137,7 +158,7 @@ function resolveGatewayConfig(raw: GatewayWellKnownResponse | undefined): Resolv
 		routes: {
 			anthropic: resolveRouteConfig(raw, "anthropic"),
 			openai: resolveRouteConfig(raw, "openai"),
-			google: resolveRouteConfig(raw, "google"),
+			xai: resolveRouteConfig(raw, "xai"),
 			"workers-ai": resolveRouteConfig(raw, "workers-ai"),
 		},
 		raw,
@@ -155,6 +176,7 @@ export function clearGatewayConfigCache(): void {
 export async function getGatewayConfig(options?: {
 	forceReload?: boolean;
 	fallbackToDefault?: boolean;
+	token?: string;
 }): Promise<ResolvedGatewayConfig> {
 	const forceReload = options?.forceReload === true;
 	const fallbackToDefault = options?.fallbackToDefault !== false;
@@ -173,7 +195,8 @@ export async function getGatewayConfig(options?: {
 			throw new Error(`Gateway well-known request failed: ${response.status} ${response.statusText}`);
 		}
 
-		const raw = (await response.json()) as GatewayWellKnownResponse;
+		const wellKnown = (await response.json()) as GatewayWellKnownResponse;
+		const raw = await mergeRemoteConfig(wellKnown, options?.token);
 		const resolved = resolveGatewayConfig(raw);
 		cachedGatewayConfig = { expiresAt: now + WELL_KNOWN_CACHE_TTL_MS, value: resolved };
 		return resolved;
@@ -220,6 +243,36 @@ export function resolvePreferredToken(passedApiKey?: string): string | undefined
 	if (passedApiKey?.trim()) return passedApiKey.trim();
 	if (process.env[TOKEN_ENV_OVERRIDE]?.trim()) return process.env[TOKEN_ENV_OVERRIDE]?.trim();
 	return undefined;
+}
+
+async function mergeRemoteConfig(wellKnown: GatewayWellKnownResponse, token?: string): Promise<GatewayWellKnownResponse> {
+	const remoteUrl = wellKnown.remote_config?.url?.trim();
+	if (!remoteUrl || !token) return wellKnown;
+	if (!isAllowedGatewayOrigin(remoteUrl)) {
+		throw new Error(`Refusing remote config from untrusted origin: ${remoteUrl}`);
+	}
+
+	const headers = applyGatewayToken(
+		normalizeHeaders(wellKnown.remote_config?.headers, "openai"),
+		wellKnown.auth?.env || "TOKEN",
+		token,
+	);
+	const response = await fetch(remoteUrl, {
+		method: "GET",
+		headers: { Accept: "application/json", ...headers },
+	});
+	if (!response.ok) {
+		throw new Error(`Gateway remote config request failed: ${response.status} ${response.statusText}`);
+	}
+
+	const remote = (await response.json()) as GatewayRemoteConfig;
+	return {
+		...wellKnown,
+		config: {
+			enabled_providers: remote.enabled_providers,
+			provider: remote.provider,
+		},
+	};
 }
 
 export function getGatewayTokenExpiry(token: string): number | undefined {

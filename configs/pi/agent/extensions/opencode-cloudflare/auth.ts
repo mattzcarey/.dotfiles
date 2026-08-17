@@ -1,9 +1,9 @@
-import { existsSync, readFileSync } from "node:fs";
+import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { spawn } from "node:child_process";
-import { AuthStorage, type OAuthCredential } from "@mariozechner/pi-coding-agent";
-import type { OAuthCredentials, OAuthLoginCallbacks } from "@mariozechner/pi-ai";
+import { getAgentDir, readStoredCredential } from "@earendil-works/pi-coding-agent";
+import type { OAuthCredential, OAuthCredentials, OAuthLoginCallbacks } from "@earendil-works/pi-ai";
 import {
 	DEFAULT_TOKEN_EXPIRY_MS,
 	GATEWAY_ORIGIN,
@@ -105,15 +105,35 @@ export function createGatewayCredentials(
 export function resolveGatewayToken(apiKey?: string): string | undefined {
 	const preferred = resolvePreferredToken(apiKey);
 	if (preferred) return preferred;
+	const stored = getPiStoredGatewayCredential();
+	if (stored?.access && stored.expires > Date.now()) return stored.access;
 	const imported = readImportedGatewayToken();
 	if (imported?.token) return imported.token;
-	return undefined;
+	return stored?.access;
 }
 
 export function getPiStoredGatewayCredential(): OAuthCredential | undefined {
-	const authStorage = AuthStorage.create();
-	const credential = authStorage.get(PROVIDER_ID);
+	const credential = readStoredCredential(PROVIDER_ID);
 	return credential?.type === "oauth" ? credential : undefined;
+}
+
+function writePiStoredGatewayCredential(credential: OAuthCredential): void {
+	const agentDir = getAgentDir();
+	const authPath = path.join(agentDir, "auth.json");
+	let auth: Record<string, unknown> = {};
+
+	if (existsSync(authPath)) {
+		const parsed = JSON.parse(readFileSync(authPath, "utf8")) as unknown;
+		if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+			throw new Error(`Invalid Pi auth file: ${authPath}`);
+		}
+		auth = parsed as Record<string, unknown>;
+	}
+
+	mkdirSync(agentDir, { recursive: true, mode: 0o700 });
+	auth[PROVIDER_ID] = credential;
+	writeFileSync(authPath, JSON.stringify(auth, null, 2), { encoding: "utf8", mode: 0o600 });
+	chmodSync(authPath, 0o600);
 }
 
 export async function syncImportedAuthToPi(): Promise<ImportedGatewayToken> {
@@ -123,8 +143,10 @@ export async function syncImportedAuthToPi(): Promise<ImportedGatewayToken> {
 			`No OpenCode auth found for ${GATEWAY_ORIGIN}. Run \`opencode auth login ${GATEWAY_ORIGIN}\` first or use /login ${PROVIDER_ID}.`,
 		);
 	}
-	const authStorage = AuthStorage.create();
-	authStorage.set(PROVIDER_ID, { type: "oauth", ...createGatewayCredentials(imported.token, { source: "opencode-auth" }) });
+	writePiStoredGatewayCredential({
+		type: "oauth",
+		...createGatewayCredentials(imported.token, { source: "opencode-auth" }),
+	});
 	return imported;
 }
 

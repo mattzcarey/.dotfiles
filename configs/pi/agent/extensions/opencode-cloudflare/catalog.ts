@@ -1,5 +1,7 @@
-import { getModels, type Api, type Model } from "@mariozechner/pi-ai";
-import type { ProviderModelConfig } from "@mariozechner/pi-coding-agent";
+import type { Api, Model } from "@earendil-works/pi-ai";
+import { getBuiltinModels } from "@earendil-works/pi-ai/providers/all";
+import type { ProviderModelConfig } from "@earendil-works/pi-coding-agent";
+import { resolveGatewayToken } from "./auth.ts";
 import { DEFAULT_ROUTE_URLS, type Backend } from "./constants.ts";
 import { getDefaultGatewayConfig, getGatewayConfig, stripRoutePrefix, type GatewayModelConfig } from "./wellknown.ts";
 
@@ -18,38 +20,36 @@ export interface CatalogData {
 	counts: Record<Backend, number>;
 }
 
+// Fallback for when the gateway's remote config is unreachable. Entries mirror
+// the gateway's shape: unprefixed key, routable "workers-ai/..." id.
 const DEFAULT_WORKERS_MODELS: Record<string, GatewayModelConfig> = {
-	"workers-ai/@cf/moonshotai/kimi-k2.5": {
-		name: "Kimi K2.5",
-		attachment: true,
+	"@cf/deepseek-ai/deepseek-v4-flash": {
+		id: "workers-ai/@cf/deepseek-ai/deepseek-v4-flash",
+		name: "DeepSeek V4 Flash",
 		reasoning: true,
-		tool_call: true,
-		temperature: true,
-		interleaved: { field: "reasoning_content" },
-		modalities: { input: ["text", "image"], output: ["text"] },
-		limit: { context: 256000, output: 64000 },
-		options: { max_tokens: 64000, store: false, parallel_tool_calls: true },
-	},
-	"workers-ai/@cf/zai-org/glm-4.7-flash": {
-		name: "GLM-4.7-Flash",
-		attachment: true,
-		reasoning: true,
-		tool_call: true,
-		temperature: true,
-		interleaved: { field: "reasoning_content" },
-		limit: { context: 131072, output: 64000 },
-		options: { max_tokens: 64000, store: false, parallel_tool_calls: true },
-	},
-	"workers-ai/@cf/nvidia/nemotron-3-120b-a12b": {
-		name: "Nemotron 3 Super 120B",
-		attachment: false,
-		reasoning: true,
-		tool_call: true,
-		temperature: true,
-		interleaved: { field: "reasoning_content" },
 		modalities: { input: ["text"], output: ["text"] },
-		limit: { context: 256000, output: 64000 },
-		options: { max_tokens: 64000, store: false, parallel_tool_calls: false },
+		limit: { context: 393216, output: 32000 },
+	},
+	"@cf/deepseek-ai/deepseek-v4-pro": {
+		id: "workers-ai/@cf/deepseek-ai/deepseek-v4-pro",
+		name: "DeepSeek V4 Pro",
+		reasoning: true,
+		modalities: { input: ["text"], output: ["text"] },
+		limit: { context: 1048560, output: 32000 },
+	},
+	"@cf/zai-org/glm-5.1": {
+		id: "workers-ai/@cf/zai-org/glm-5.1",
+		name: "GLM 5.1",
+		reasoning: true,
+		modalities: { input: ["text"], output: ["text"] },
+		limit: { context: 200000, output: 32000 },
+	},
+	"@cf/zai-org/glm-5.2": {
+		id: "workers-ai/@cf/zai-org/glm-5.2",
+		name: "GLM 5.2",
+		reasoning: true,
+		modalities: { input: ["text"], output: ["text"] },
+		limit: { context: 262144, output: 32000 },
 	},
 };
 
@@ -60,13 +60,17 @@ export function getCatalog(): CatalogData {
 }
 
 export async function refreshCatalog(forceReload: boolean = false): Promise<CatalogData> {
-	const gateway = await getGatewayConfig({ forceReload, fallbackToDefault: true });
+	const gateway = await getGatewayConfig({
+		forceReload,
+		fallbackToDefault: true,
+		token: resolveGatewayToken(),
+	});
 	activeCatalog = buildCatalogFromGateway(gateway);
 	return activeCatalog;
 }
 
 export function summarizeCatalog(catalog: CatalogData = activeCatalog): string {
-	return `anthropic=${catalog.counts.anthropic}, openai=${catalog.counts.openai}, google=${catalog.counts.google}, workers-ai=${catalog.counts["workers-ai"]}`;
+	return `anthropic=${catalog.counts.anthropic}, openai=${catalog.counts.openai}, xai=${catalog.counts.xai}, workers-ai=${catalog.counts["workers-ai"]}`;
 }
 
 function toProviderModelConfig(model: Model<Api>): ProviderModelConfig {
@@ -74,6 +78,7 @@ function toProviderModelConfig(model: Model<Api>): ProviderModelConfig {
 		id: model.id,
 		name: model.name,
 		reasoning: model.reasoning,
+		thinkingLevelMap: model.thinkingLevelMap,
 		input: model.input,
 		cost: model.cost,
 		contextWindow: model.contextWindow,
@@ -93,10 +98,9 @@ function applyGatewayModelLimit(model: Model<Api>, gatewayModels: Record<string,
 }
 
 function buildBuiltInModels(backend: Exclude<Backend, "workers-ai">, gatewayModels: Record<string, GatewayModelConfig>): Model<Api>[] {
-	const provider = backend === "google" ? "google" : backend;
-	const builtIns = getModels(provider as "anthropic" | "openai" | "google") as Model<Api>[];
+	const builtIns = getBuiltinModels(backend) as Model<Api>[];
 
-	if (backend === "openai" && Object.keys(gatewayModels).length > 0) {
+	if ((backend === "openai" || backend === "xai") && Object.keys(gatewayModels).length > 0) {
 		const allowlist = new Set(Object.keys(gatewayModels).map((id) => stripRoutePrefix(id, backend)));
 		return builtIns.filter((model) => allowlist.has(model.id)).map((model) => applyGatewayModelLimit(model, gatewayModels, backend));
 	}
@@ -109,11 +113,14 @@ function buildWorkersModels(gatewayModels: Record<string, GatewayModelConfig>, b
 	const models: ProviderModelConfig[] = [];
 	const routes = new Map<string, RouteDescriptor>();
 
-	for (const [fullModelId, config] of Object.entries(source)) {
-		const shortId = stripRoutePrefix(fullModelId, "workers-ai");
+	for (const [key, config] of Object.entries(source)) {
+		// Keys are unprefixed ("@cf/...") with the routable id in config.id
+		// ("workers-ai/@cf/..."); the /compat endpoint only accepts the prefixed form.
+		const requestModelId = config.id || key;
+		const shortId = stripRoutePrefix(key, "workers-ai");
 		models.push({
 			id: shortId,
-			name: `${fullModelId} (${config.name || shortId})`,
+			name: `${requestModelId} (${config.name || shortId})`,
 			reasoning: config.reasoning !== false,
 			input: config.modalities?.input || (config.attachment ? ["text", "image"] : ["text"]),
 			cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
@@ -131,7 +138,7 @@ function buildWorkersModels(gatewayModels: Record<string, GatewayModelConfig>, b
 			api: "openai-completions",
 			baseUrl,
 			headers,
-			requestModelId: fullModelId,
+			requestModelId,
 			compat: {
 				supportsStore: false,
 				supportsDeveloperRole: false,
@@ -150,7 +157,7 @@ function buildCatalogFromGateway(gateway: Awaited<ReturnType<typeof getGatewayCo
 	const counts: Record<Backend, number> = {
 		anthropic: 0,
 		openai: 0,
-		google: 0,
+		xai: 0,
 		"workers-ai": 0,
 	};
 

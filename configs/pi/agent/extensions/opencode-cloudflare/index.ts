@@ -1,6 +1,6 @@
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
-import type { ExtensionAPI, ExtensionCommandContext } from "@mariozechner/pi-coding-agent";
+import type { ExtensionAPI, ExtensionCommandContext } from "@earendil-works/pi-coding-agent";
 import {
 	describeTokenState,
 	findOpenCodeAuthPath,
@@ -59,13 +59,17 @@ async function handleStatus(ctx: ExtensionCommandContext): Promise<void> {
 
 async function handleSyncAuth(ctx: ExtensionCommandContext): Promise<void> {
 	const imported = await syncImportedAuthToPi();
-	ctx.ui.notify(`Imported OpenCode auth from ${imported.authPath}. Reloading provider state...`, "success");
+	ctx.ui.notify(`Imported OpenCode auth from ${imported.authPath}. Reloading provider state...`, "info");
 	await ctx.reload();
 }
 
 async function handleDoctor(ctx: ExtensionCommandContext): Promise<void> {
 	clearGatewayConfigCache();
-	const gateway = await getGatewayConfig({ forceReload: true, fallbackToDefault: false });
+	const gateway = await getGatewayConfig({
+		forceReload: true,
+		fallbackToDefault: false,
+		token: getPiStoredGatewayCredential()?.access || readImportedGatewayToken()?.token,
+	});
 	await refreshCatalog(true);
 
 	const report = [

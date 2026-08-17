@@ -5,10 +5,42 @@ import path from "node:path";
 
 const GATEWAY_ORIGIN = "https://opencode.cloudflare.dev";
 const WELL_KNOWN_URL = `${GATEWAY_ORIGIN}/.well-known/opencode`;
+const PROVIDER_ID = "opencode.cloudflare.dev";
 const TOKEN_ENV_OVERRIDE = "OPENCODE_CLOUDFLARE_TOKEN";
 const AUTH_FILE_ENV = "OPENCODE_CLOUDFLARE_AUTH_FILE";
 
-function listCandidates() {
+function readJson(filePath) {
+	try {
+		return JSON.parse(fs.readFileSync(filePath, "utf8"));
+	} catch {
+		return undefined;
+	}
+}
+
+function tokenExpiry(token) {
+	const parts = token.split(".");
+	if (parts.length < 2) return undefined;
+	try {
+		const payload = JSON.parse(Buffer.from(parts[1].replace(/-/g, "+").replace(/_/g, "/"), "base64").toString("utf8"));
+		return typeof payload.exp === "number" ? payload.exp * 1000 : undefined;
+	} catch {
+		return undefined;
+	}
+}
+
+function isUsable(token) {
+	if (!token?.trim()) return false;
+	const expires = tokenExpiry(token);
+	return !expires || expires > Date.now();
+}
+
+function readPiToken() {
+	const auth = readJson(path.join(os.homedir(), ".pi", "agent", "auth.json"));
+	const access = auth?.[PROVIDER_ID]?.access;
+	return typeof access === "string" ? access.trim() : undefined;
+}
+
+function listOpenCodeCandidates() {
 	const candidates = new Set();
 	if (process.env[AUTH_FILE_ENV]) candidates.add(path.resolve(process.env[AUTH_FILE_ENV]));
 	if (process.env.XDG_DATA_HOME) candidates.add(path.join(process.env.XDG_DATA_HOME, "opencode", "auth.json"));
@@ -16,35 +48,23 @@ function listCandidates() {
 	return [...candidates];
 }
 
-function normalizeKeys() {
-	return [GATEWAY_ORIGIN, `${GATEWAY_ORIGIN}/`, WELL_KNOWN_URL];
-}
-
-function readImportedToken() {
-	for (const authPath of listCandidates()) {
+function readOpenCodeToken() {
+	for (const authPath of listOpenCodeCandidates()) {
 		if (!fs.existsSync(authPath)) continue;
-		try {
-			const auth = JSON.parse(fs.readFileSync(authPath, "utf8"));
-			for (const key of normalizeKeys()) {
-				const record = auth?.[key];
-				if (record && typeof record.token === "string" && record.token.trim()) {
-					return record.token.trim();
-				}
-			}
-		} catch {
-			// Ignore parse errors and try the next candidate.
+		const auth = readJson(authPath);
+		for (const key of [GATEWAY_ORIGIN, `${GATEWAY_ORIGIN}/`, WELL_KNOWN_URL]) {
+			const token = auth?.[key]?.token;
+			if (typeof token === "string" && token.trim()) return token.trim();
 		}
 	}
 	return undefined;
 }
 
-const envToken = process.env[TOKEN_ENV_OVERRIDE]?.trim();
-if (envToken) {
-	process.stdout.write(envToken);
-	process.exit(0);
-}
+const candidates = [
+	process.env[TOKEN_ENV_OVERRIDE]?.trim(),
+	readPiToken(),
+	readOpenCodeToken(),
+].filter(Boolean);
 
-const imported = readImportedToken();
-if (imported) {
-	process.stdout.write(imported);
-}
+const token = candidates.find(isUsable) || candidates[0];
+if (token) process.stdout.write(token);
