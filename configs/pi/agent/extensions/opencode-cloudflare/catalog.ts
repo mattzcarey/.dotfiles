@@ -37,13 +37,6 @@ const DEFAULT_WORKERS_MODELS: Record<string, GatewayModelConfig> = {
 		modalities: { input: ["text"], output: ["text"] },
 		limit: { context: 1048560, output: 32000 },
 	},
-	"@cf/zai-org/glm-5.1": {
-		id: "workers-ai/@cf/zai-org/glm-5.1",
-		name: "GLM 5.1",
-		reasoning: true,
-		modalities: { input: ["text"], output: ["text"] },
-		limit: { context: 200000, output: 32000 },
-	},
 	"@cf/zai-org/glm-5.2": {
 		id: "workers-ai/@cf/zai-org/glm-5.2",
 		name: "GLM 5.2",

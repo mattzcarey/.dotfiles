@@ -1,14 +1,19 @@
+// Pi's extension loader only exposes pi-ai through the compat entrypoint (it
+// aliases the bare "@earendil-works/pi-ai" specifier to compat and supports no
+// other subpaths besides /oauth and /providers/all), so the api factories must
+// be imported from here rather than "@earendil-works/pi-ai/api/*.lazy".
 import {
+	anthropicMessagesApi,
 	type Api,
 	type AssistantMessage,
 	type AssistantMessageEvent,
 	type AssistantMessageEventStream,
 	type Context,
 	createAssistantMessageEventStream,
-	streamSimpleAnthropic,
-	streamSimpleOpenAICompletions,
-	streamSimpleOpenAIResponses,
 	type Model,
+	openAICompletionsApi,
+	openAIResponsesApi,
+	type ProviderStreams,
 	type SimpleStreamOptions,
 } from "@earendil-works/pi-ai/compat";
 import { getCatalog, refreshCatalog, type RouteDescriptor } from "./catalog.ts";
@@ -73,25 +78,27 @@ async function resolveRoute(model: Model<Api>): Promise<RouteDescriptor> {
 	return route;
 }
 
+// Lazy API implementations: the underlying SDK loads on the first request.
+const DELEGATED_APIS: Partial<Record<Api, ProviderStreams>> = {
+	"anthropic-messages": anthropicMessagesApi(),
+	"openai-responses": openAIResponsesApi(),
+	"openai-completions": openAICompletionsApi(),
+};
+
 function createDelegatedStream(
 	model: Model<Api>,
 	route: RouteDescriptor,
 	context: Context,
 	options: SimpleStreamOptions,
 ): AssistantMessageEventStream {
-	switch (route.api) {
-		case "anthropic-messages":
-			// The gateway wants Bearer auth plus our cf-access-token headers. pi-ai's
-			// Anthropic client only does that for the github-copilot provider (otherwise
-			// it sends x-api-key / Claude OAuth headers), so masquerade as it.
-			return streamSimpleAnthropic({ ...model, provider: "github-copilot" } as Model<"anthropic-messages">, context, options);
-		case "openai-responses":
-			return streamSimpleOpenAIResponses(model as Model<"openai-responses">, context, options);
-		case "openai-completions":
-			return streamSimpleOpenAICompletions(model as Model<"openai-completions">, context, options);
-		default:
-			throw new Error(`Unsupported delegated API for ${PROVIDER_ID}: ${route.api}`);
+	const api = DELEGATED_APIS[route.api];
+	if (!api) {
+		throw new Error(`Unsupported delegated API for ${PROVIDER_ID}: ${route.api}`);
 	}
+	// The gateway authenticates via the cf-access-token header alone, so the
+	// anthropic route no longer needs the old github-copilot provider masquerade
+	// (which forced Bearer auth); the default x-api-key client works fine.
+	return api.streamSimple(model, context, options);
 }
 
 // Events from the delegated stream carry the backend's api/provider/model ids;
