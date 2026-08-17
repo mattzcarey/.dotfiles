@@ -1,12 +1,12 @@
 ---
 name: codex-review
-description: Send the current plan to OpenCode CLI with GPT-5.3-Codex for iterative review. Claude and OpenCode go back-and-forth until the plan is approved.
+description: Send the current plan to OpenCode CLI with gpt-5.6-sol for iterative review. Claude and OpenCode go back-and-forth until the plan is approved.
 user_invocable: true
 ---
 
 # OpenCode Plan Review (Iterative)
 
-Send the current implementation plan to OpenCode (using GPT-5.3-Codex) for review. Claude revises the plan based on feedback and re-submits until approved. Max 5 rounds.
+Send the current implementation plan to OpenCode (using GPT-5.6-Sol) for review. Claude revises the plan based on feedback and re-submits until approved. Max 5 rounds.
 
 ---
 
@@ -58,7 +58,7 @@ Run OpenCode CLI in non-interactive mode to review the plan:
 
 ```bash
 opencode run \
-  -m openai/gpt-5.3-codex \
+  -m openai/gpt-5.6-sol \
   "Review the implementation plan in /tmp/claude-plan-${REVIEW_ID}.md.
 
 The plan includes repository context at the top — use this to understand the codebase. You can browse the repo for additional context if needed.
@@ -79,7 +79,7 @@ If changes are needed, end with exactly: VERDICT: REVISE" > /tmp/opencode-review
 **Capture the OpenCode session ID** from the output. OpenCode displays session info that can be used with `--session` to continue. Store this as `OPENCODE_SESSION_ID`.
 
 **Notes:**
-- Use `-m openai/gpt-5.3-codex` as the default model. If the user specifies a different model (e.g., `/codex-review anthropic/claude-sonnet-4`), use that instead.
+- Use `-m openai/gpt-5.6-sol` as the default model. If the user specifies a different model (e.g., `/codex-review anthropic/claude-sonnet-5`), use that instead.
 - OpenCode has read access to the filesystem by default for reading context.
 - Redirect stdout to capture the output to a file for reliable reading.
 
@@ -89,7 +89,7 @@ If changes are needed, end with exactly: VERDICT: REVISE" > /tmp/opencode-review
 2. Present OpenCode's review to the user:
 
 ```
-## OpenCode Review — Round N (model: openai/gpt-5.3-codex)
+## OpenCode Review — Round N (model: openai/gpt-5.6-sol)
 
 [OpenCode's feedback here]
 ```
@@ -120,7 +120,7 @@ Continue the existing OpenCode session so it has full context of the prior revie
 
 ```bash
 opencode run \
-  -m openai/gpt-5.3-codex \
+  -m openai/gpt-5.6-sol \
   --session ${OPENCODE_SESSION_ID} \
   "I've revised the plan based on your feedback. The updated plan is in /tmp/claude-plan-${REVIEW_ID}.md.
 
@@ -140,7 +140,7 @@ Then go back to **Step 4** (Read Review & Check Verdict).
 Once approved (or max rounds reached):
 
 ```
-## OpenCode Review — Final (model: openai/gpt-5.3-codex)
+## OpenCode Review — Final (model: openai/gpt-5.6-sol)
 
 **Status:** ✅ Approved after N round(s)
 
@@ -153,7 +153,7 @@ Once approved (or max rounds reached):
 If max rounds were reached without approval:
 
 ```
-## OpenCode Review — Final (model: openai/gpt-5.3-codex)
+## OpenCode Review — Final (model: openai/gpt-5.6-sol)
 
 **Status:** ⚠️ Max rounds (5) reached — not fully approved
 
@@ -185,7 +185,7 @@ Max 5 rounds. Each round preserves OpenCode's conversation context via session c
 
 - Claude **actively revises the plan** based on OpenCode feedback between rounds — this is NOT just passing messages, Claude should make real improvements
 - **Always include repo context** — detect the git remote URL and working directory so OpenCode can browse the codebase for context
-- Default model is `openai/gpt-5.3-codex`. Accept model override from the user's arguments (e.g., `/codex-review anthropic/claude-sonnet-4`)
+- Default model is `openai/gpt-5.6-sol`. Accept model override from the user's arguments (e.g., `/codex-review anthropic/claude-sonnet-5`)
 - Max 5 review rounds to prevent infinite loops
 - Show the user each round's feedback and revisions so they can follow along
 - If OpenCode CLI is not installed or fails, inform the user and suggest installing from https://opencode.ai or running `curl -fsSL https://opencode.ai/install | bash`

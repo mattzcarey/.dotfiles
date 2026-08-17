@@ -18,4 +18,16 @@
     source = ../configs/claude/skills/chrome-cdp/scripts/cdp.mjs;
     executable = true;
   };
+
+  # Skills from https://github.com/dmmulroy/skills
+  home.file.".claude/skills/bro".source = ../configs/claude/skills/bro;
+  home.file.".claude/skills/cloudflare-composition-root".source = ../configs/claude/skills/cloudflare-composition-root;
+  home.file.".claude/skills/coding-standards".source = ../configs/claude/skills/coding-standards;
+  home.file.".claude/skills/effect-service-design".source = ../configs/claude/skills/effect-service-design;
+  home.file.".claude/skills/tech-spec".source = ../configs/claude/skills/tech-spec;
+
+  # Skills from https://github.com/mattpocock/skills (grill-me invokes grilling)
+  home.file.".claude/skills/grill-me".source = ../configs/claude/skills/grill-me;
+  home.file.".claude/skills/grilling".source = ../configs/claude/skills/grilling;
+  home.file.".claude/skills/domain-modeling".source = ../configs/claude/skills/domain-modeling;
 }
