@@ -4,3 +4,6 @@ result
 
 # Secrets - keep these local
 configs/opencode/opencode.local.json
+
+# Build artifacts
+*.tsbuildinfo
