@@ -13,6 +13,7 @@
   home.file.".claude/skills/new-cf-worker/SKILL.md".source = ../configs/claude/skills/new-cf-worker/SKILL.md;
   home.file.".claude/skills/review-fix/SKILL.md".source = ../configs/claude/skills/review-fix/SKILL.md;
   home.file.".claude/skills/codex-review/SKILL.md".source = ../configs/claude/skills/codex-review/SKILL.md;
+  home.file.".claude/skills/curl/SKILL.md".source = ../configs/claude/skills/curl/SKILL.md;
   home.file.".claude/skills/chrome-cdp/SKILL.md".source = ../configs/claude/skills/chrome-cdp/SKILL.md;
   home.file.".claude/skills/chrome-cdp/scripts/cdp.mjs" = {
     source = ../configs/claude/skills/chrome-cdp/scripts/cdp.mjs;
@@ -30,4 +31,7 @@
   home.file.".claude/skills/grill-me".source = ../configs/claude/skills/grill-me;
   home.file.".claude/skills/grilling".source = ../configs/claude/skills/grilling;
   home.file.".claude/skills/domain-modeling".source = ../configs/claude/skills/domain-modeling;
+
+  # Skills from https://github.com/cursor/plugins/tree/main/pstack
+  home.file.".claude/skills/unslop".source = ../configs/claude/skills/unslop;
 }
