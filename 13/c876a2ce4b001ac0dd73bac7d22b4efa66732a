@@ -1,0 +1,21 @@
+configs/claude/skills/unslop/LICENSE
+  s_d302152b7a3027::t_a1cc16d017feda 1-21
+configs/claude/skills/unslop/SKILL.md
+  s_d302152b7a3027::t_1e22971c7bea14 1-80
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "13c876a2ce4b001ac0dd73bac7d22b4efa66732a",
+  "prompts": {},
+  "sessions": {
+    "s_d302152b7a3027": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "01a01ed3-2c26-790d-bda4-8bcbcd162180",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Matt Carey <mcarey@cloudflare.com>"
+    }
+  }
+}
