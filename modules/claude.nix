@@ -14,6 +14,7 @@
   home.file.".claude/skills/review-fix/SKILL.md".source = ../configs/claude/skills/review-fix/SKILL.md;
   home.file.".claude/skills/codex-review/SKILL.md".source = ../configs/claude/skills/codex-review/SKILL.md;
   home.file.".claude/skills/curl/SKILL.md".source = ../configs/claude/skills/curl/SKILL.md;
+  home.file.".claude/skills/product-description/SKILL.md".source = ../configs/claude/skills/product-description/SKILL.md;
   home.file.".claude/skills/chrome-cdp/SKILL.md".source = ../configs/claude/skills/chrome-cdp/SKILL.md;
   home.file.".claude/skills/chrome-cdp/scripts/cdp.mjs" = {
     source = ../configs/claude/skills/chrome-cdp/scripts/cdp.mjs;
