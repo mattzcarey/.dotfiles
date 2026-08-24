@@ -1,0 +1,19 @@
+configs/claude/skills/product-description/SKILL.md
+  s_1c769fbbf23a52::t_f5db82347f0b9e 1-93
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "2f937c2c7f5d9b2c6c18b0627d50d0de89993eae",
+  "prompts": {},
+  "sessions": {
+    "s_1c769fbbf23a52": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "01a03363-c4f3-774b-b0ce-7af314ef1a26",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Matt Carey <mcarey@cloudflare.com>"
+    }
+  }
+}
