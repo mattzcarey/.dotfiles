@@ -9,13 +9,9 @@ in {
   home.file."Library/Application Support/Code/User/settings.json".text = vscodeSettings;
   home.file."Library/Application Support/Code/User/keybindings.json".text = vscodeKeybindings;
 
-  # Cursor (same settings)
-  home.file."Library/Application Support/Cursor/User/settings.json".text = vscodeSettings;
-  home.file."Library/Application Support/Cursor/User/keybindings.json".text = vscodeKeybindings;
-
-  # Windsurf (same settings)
-  home.file."Library/Application Support/Windsurf/User/settings.json".text = vscodeSettings;
-  home.file."Library/Application Support/Windsurf/User/keybindings.json".text = vscodeKeybindings;
+  # Cursor
+  home.file."Library/Application Support/Cursor/User/settings.json".source = ../configs/cursor/settings.json;
+  home.file."Library/Application Support/Cursor/User/keybindings.json".source = ../configs/cursor/keybindings.json;
 
   # Zed
   home.file.".config/zed/settings.json".source = ../configs/zed/settings.json;
