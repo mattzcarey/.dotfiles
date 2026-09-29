@@ -1,14 +1,23 @@
 {
-  "lastChangelogVersion": "0.61.0",
+  "lastChangelogVersion": "0.87.1",
   "defaultProvider": "opencode.cloudflare.dev",
-  "defaultModel": "gpt-5.6-sol",
-  "defaultThinkingLevel": "max",
+  "defaultModel": "claude-opus-5-5",
+  "defaultThinkingLevel": "medium",
   "hideThinkingBlock": false,
   "enableSkillCommands": true,
   "skills": [
     "~/.claude/skills"
   ],
   "packages": [
-    "https://github.com/davebcn87/pi-autoresearch"
-  ]
+    "git:https://github.com/badlogic/pi-diff-review",
+    "npm:@quintinshaw/pi-dynamic-workflows",
+    "https://github.com/nicobailon/pi-mcp-adapter"
+  ],
+  "theme": "dark",
+  "retry": {
+    "enabled": false
+  },
+  "compaction": {
+    "enabled": false
+  }
 }
