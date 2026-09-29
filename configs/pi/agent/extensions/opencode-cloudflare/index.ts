@@ -4,6 +4,7 @@ import { loginOpencodeCloudflare, refreshOpencodeCloudflare, resolveGatewayToken
 import { getCatalog, refreshCatalog, summarizeCatalog } from "./catalog.ts";
 import { CUSTOM_API, GATEWAY_ORIGIN, PROVIDER_ID, PROVIDER_NAME } from "./constants.ts";
 import { streamOpencodeCloudflare } from "./dispatch.ts";
+import { registerFableProvider } from "./fable.ts";
 import { clearGatewayConfigCache, getGatewayConfig } from "./wellknown.ts";
 
 function isCommandAvailable(command: string): boolean {
@@ -36,6 +37,7 @@ async function handleDoctor(ctx: ExtensionCommandContext): Promise<void> {
 }
 
 export default async function (pi: ExtensionAPI) {
+	registerFableProvider(pi);
 	const catalog = await refreshCatalog(true);
 
 	pi.registerProvider(PROVIDER_ID, {
