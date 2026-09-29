@@ -3,8 +3,6 @@ name: cloudflare-composition-root
 description: Composition roots for Hono and Cloudflare. Use when adding a binding-backed service or refactoring raw runtime dependencies out of inner code.
 ---
 
-> Skill by [Dillon Mulroy](https://github.com/dmmulroy/skills) (MIT).
-
 # Cloudflare Composition Root
 
 Use a **composition root**: each runtime entrypoint turns raw Cloudflare capabilities into application-owned dependencies, assembles services, and invokes them. Inner code receives ports, never `Env`, raw bindings, framework service locators, or binding names.

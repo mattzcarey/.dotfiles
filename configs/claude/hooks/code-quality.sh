@@ -26,7 +26,13 @@ ERRORS=""
 # --- Check 1: No .js/.jsx extensions in imports ---
 # Matches: from "..." or from '...' or import("...") or import('...')  or require("...") or require('...')
 # where the path ends in .js or .jsx
-JS_EXT_IMPORTS=$(echo "$CONTENT" | $RG -n '(from\s+["\x27].*\.jsx?["\x27]|import\s*\(\s*["\x27].*\.jsx?["\x27]|require\s*\(\s*["\x27].*\.jsx?["\x27])' 2>/dev/null)
+# Session escape hatch: `touch ~/.claude/.skip-js-ext-check` to disable this check
+# (e.g. when working in a NodeNext repo that REQUIRES .js extensions). `rm` it to restore.
+if [ -f "$HOME/.claude/.skip-js-ext-check" ]; then
+    JS_EXT_IMPORTS=""
+else
+    JS_EXT_IMPORTS=$(echo "$CONTENT" | $RG -n '(from\s+["\x27].*\.jsx?["\x27]|import\s*\(\s*["\x27].*\.jsx?["\x27]|require\s*\(\s*["\x27].*\.jsx?["\x27])' 2>/dev/null)
+fi
 
 if [ -n "$JS_EXT_IMPORTS" ]; then
     ERRORS="${ERRORS}BLOCKED: .js/.jsx file extensions in imports are unnecessary with bundler module resolution. Remove them.\n"

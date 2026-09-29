@@ -4,8 +4,6 @@ description: Write a typed call-stack architecture handoff.
 disable-model-invocation: true
 ---
 
-> Skill by [Dillon Mulroy](https://github.com/dmmulroy/skills) (MIT).
-
 # Tech Spec
 
 A tech spec is a **typed call-stack architecture handoff**: code-shaped contracts plus execution flows. Prefer TypeScript pseudocode over prose wherever precision matters.

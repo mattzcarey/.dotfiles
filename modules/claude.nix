@@ -14,12 +14,16 @@
   home.file.".claude/skills/review-fix/SKILL.md".source = ../configs/claude/skills/review-fix/SKILL.md;
   home.file.".claude/skills/codex-review/SKILL.md".source = ../configs/claude/skills/codex-review/SKILL.md;
   home.file.".claude/skills/curl/SKILL.md".source = ../configs/claude/skills/curl/SKILL.md;
-  home.file.".claude/skills/product-description/SKILL.md".source = ../configs/claude/skills/product-description/SKILL.md;
-  home.file.".claude/skills/chrome-cdp/SKILL.md".source = ../configs/claude/skills/chrome-cdp/SKILL.md;
-  home.file.".claude/skills/chrome-cdp/scripts/cdp.mjs" = {
-    source = ../configs/claude/skills/chrome-cdp/scripts/cdp.mjs;
-    executable = true;
-  };
+  home.file.".claude/skills/diagnose".source = ../configs/claude/skills/diagnose;
+  home.file.".claude/skills/grill-with-docs".source = ../configs/claude/skills/grill-with-docs;
+  home.file.".claude/skills/improve-codebase-architecture".source = ../configs/claude/skills/improve-codebase-architecture;
+  home.file.".claude/skills/install-anti-slop".source = ../configs/claude/skills/install-anti-slop;
+  home.file.".claude/skills/product-description".source = ../configs/claude/skills/product-description;
+  home.file.".claude/skills/prototype".source = ../configs/claude/skills/prototype;
+  home.file.".claude/skills/tdd".source = ../configs/claude/skills/tdd;
+  home.file.".claude/skills/thermo-nuclear-code-quality-review".source = ../configs/claude/skills/thermo-nuclear-code-quality-review;
+  home.file.".claude/skills/zoom-out".source = ../configs/claude/skills/zoom-out;
+  home.file.".claude/skills/chrome-cdp".source = ../configs/claude/skills/chrome-cdp;
 
   # Skills from https://github.com/dmmulroy/skills
   home.file.".claude/skills/bro".source = ../configs/claude/skills/bro;
@@ -35,4 +39,7 @@
 
   # Skills from https://github.com/cursor/plugins/tree/main/pstack
   home.file.".claude/skills/unslop".source = ../configs/claude/skills/unslop;
+
+  # Skill by Luke Parker (@LukeParkerDev), shared on X
+  home.file.".claude/skills/writing-pr".source = ../configs/claude/skills/writing-pr;
 }
