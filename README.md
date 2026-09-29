@@ -8,10 +8,9 @@ My dev environment managed with [Nix](https://nixos.org/) + [home-manager](https
 |---|---|
 | `shell.nix` | zsh, oh-my-zsh (robbyrussell), aliases, PATH setup (bun, pnpm, fnm, zig, opencode, claude) |
 | `git.nix` | Git user config |
-| `editors.nix` | VS Code / Cursor / Windsurf (shared settings), Zed (separate) |
+| `editors.nix` | VS Code, Cursor, and Zed settings |
 | `claude.nix` | [Claude Code](https://cli.anthropic.com) settings, pre-tool-use hooks, custom commands |
 | `pi.nix` | [Pi](https://github.com/nichochar/pi) agent settings + opencode-cloudflare extension |
-| `opencode.nix` | [OpenCode](https://opencode.ai) config |
 | `packages.nix` | Nix-managed packages (empty by default — tools installed via brew/fnm/standalone) |
 
 ## Prerequisites
