@@ -8,6 +8,8 @@
     ./modules/claude.nix
     ./modules/pi.nix
     ./modules/ssh.nix
+    ./modules/herdr.nix
+    ./modules/hex.nix
     ./modules/packages.nix
   ];
 

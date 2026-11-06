@@ -1,25 +1,19 @@
 {
-  "includeCoAuthoredBy": false,
   "env": {
     "CLAUDE_CODE_SUBAGENT_MODEL": "opus"
   },
+  "attribution": {
+    "commit": "",
+    "pr": "",
+    "sessionUrl": false
+  },
+  "includeCoAuthoredBy": false,
   "permissions": {
     "allow": [],
     "deny": []
   },
-  "model": "claude-fable-5-1[1m]",
+  "model": "opus",
   "hooks": {
-    "PostToolUse": [
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "/Users/matt/.git-ai/bin/git-ai checkpoint claude --hook-input stdin"
-          }
-        ]
-      }
-    ],
     "PreToolUse": [
       {
         "matcher": "Write|Edit",
@@ -30,13 +24,16 @@
             "timeout": 10
           }
         ]
-      },
+      }
+    ],
+    "SessionStart": [
       {
         "matcher": "*",
         "hooks": [
           {
             "type": "command",
-            "command": "/Users/matt/.git-ai/bin/git-ai checkpoint claude --hook-input stdin"
+            "command": "bash '/Users/matt/.claude/hooks/herdr-agent-state.sh' session",
+            "timeout": 10
           }
         ]
       }
@@ -52,6 +49,12 @@
   "modelSettings": {
     "claude-sonnet-5": {
       "effortLevel": "high"
+    },
+    "claude-fable-5-1": {
+      "effortLevel": "medium"
+    },
+    "claude-opus-5-5": {
+      "effortLevel": "high"
     }
   },
   "autoUpdatesChannel": "latest",
@@ -60,11 +63,7 @@
     "mode": "hold"
   },
   "skipDangerousModePermissionPrompt": true,
+  "autoCompactEnabled": true,
   "agentPushNotifEnabled": true,
-  "voiceEnabled": true,
-  "attribution": {
-    "commit": "",
-    "pr": "",
-    "sessionUrl": false
-  }
+  "voiceEnabled": true
 }

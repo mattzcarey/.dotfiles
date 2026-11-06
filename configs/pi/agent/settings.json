@@ -1,6 +1,6 @@
 {
-  "lastChangelogVersion": "0.87.1",
-  "defaultProvider": "opencode.cloudflare.dev",
+  "lastChangelogVersion": "1.5.0",
+  "defaultProvider": "fable.opencode.cloudflare.dev",
   "defaultModel": "claude-opus-5-5",
   "defaultThinkingLevel": "medium",
   "hideThinkingBlock": false,
@@ -10,7 +10,6 @@
   ],
   "packages": [
     "git:https://github.com/badlogic/pi-diff-review",
-    "npm:@quintinshaw/pi-dynamic-workflows",
     "https://github.com/nicobailon/pi-mcp-adapter"
   ],
   "theme": "dark",
@@ -19,5 +18,11 @@
   },
   "compaction": {
     "enabled": false
+  },
+  "extensions": [
+    "-builtin:mcp"
+  ],
+  "extensionChangelogVersions": {
+    "{\"source\":\"https://github.com/nicobailon/pi-mcp-adapter\",\"scope\":\"user\"}": "5.1.0"
   }
 }
