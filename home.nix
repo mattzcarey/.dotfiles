@@ -9,6 +9,7 @@
     ./modules/pi.nix
     ./modules/ssh.nix
     ./modules/herdr.nix
+    ./modules/rex.nix
     ./modules/hex.nix
     ./modules/packages.nix
   ];

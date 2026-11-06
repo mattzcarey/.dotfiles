@@ -12,6 +12,7 @@ My dev environment managed with [Nix](https://nixos.org/) + [home-manager](https
 | `claude.nix` | [Claude Code](https://cli.anthropic.com) settings, pre-tool-use hooks, custom commands |
 | `pi.nix` | [Pi](https://github.com/nichochar/pi) agent settings + opencode-cloudflare extension |
 | `herdr.nix` | [herdr](https://herdr.dev) config and a `herder` alias for the binary |
+| `rex.nix` | [Rex](https://www.superlogical.com/rex) terminal multiplexer config (`init.lua`) |
 | `hex.nix` | [Hex](https://github.com/anomalyco/hex) dictation settings |
 | `packages.nix` | Nix-managed packages (empty by default — tools installed via brew/fnm/standalone) |
 
